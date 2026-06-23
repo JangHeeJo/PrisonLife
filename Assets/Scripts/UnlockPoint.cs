@@ -19,7 +19,7 @@ public sealed class UnlockPoint : InteractionPointBase
 
     [Header("Gold Currency")]
     [Tooltip("Money 비용을 골드 HUD의 저장 골드에서 차감합니다.")]
-    [SerializeField] private bool useGoldHudForMoneyCost = true;
+    [SerializeField] private bool useGoldHudForMoneyCost = false;
 
     [Tooltip("Money 비용 결제에 사용할 GoldHudView입니다. 비워두면 자동 검색합니다.")]
     [SerializeField] private GoldHudView goldHudView;
@@ -134,6 +134,13 @@ public sealed class UnlockPoint : InteractionPointBase
 
     private bool TryPayCost(PlayerCarryStack playerCarryStack)
     {
+        if (playerCarryStack != null &&
+            playerCarryStack.GetCount(costResourceType) > 0 &&
+            playerCarryStack.TryRemove(costResourceType))
+        {
+            return true;
+        }
+
         if (ShouldUseGoldHudCost)
         {
             if (goldHudView == null)
@@ -145,13 +152,7 @@ public sealed class UnlockPoint : InteractionPointBase
             return goldHudView.TrySpendGold(1);
         }
 
-        if (playerCarryStack == null)
-            return false;
-
-        if (playerCarryStack.GetCount(costResourceType) <= 0)
-            return false;
-
-        return playerCarryStack.TryRemove(costResourceType);
+        return false;
     }
 
     private void CompleteUnlock()

@@ -20,7 +20,7 @@ public sealed class GoldHudView : MonoBehaviour
 
     [Header("Gold Rule")]
     [Tooltip("Money 1개당 증가할 골드 수량입니다.")]
-    [SerializeField] private int goldPerMoney = 10;
+    [SerializeField] private int goldPerMoney = 1;
 
     [Header("IAP Multiplier")]
     [Tooltip("비워두면 GoldMultiplierProvider.Instance를 사용합니다.")]

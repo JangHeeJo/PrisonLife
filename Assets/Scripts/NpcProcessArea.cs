@@ -42,7 +42,7 @@ public class NpcProcessArea : MonoBehaviour, IResourceReceiver
 
     [Header("Money Reward")]
     [SerializeField] private MoneyRewardPoint moneyRewardPoint;
-    [SerializeField] private int rewardMoneyPerNpc = 6;
+    [SerializeField] private int rewardMoneyPerNpc = 2;
 
     [Header("Prison")]
     [SerializeField] private bool deactivateNpcAtPrison = true;
