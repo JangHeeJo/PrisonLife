@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e26c70a25dce9e41a4bcacf781699c5, type: 3}
+  m_Name: WeaponVisualDatabase
+  m_EditorClassIdentifier: 
+  entries:
+  - visualId: Weapon_Pickaxe_01
+    prefab: {fileID: 5649592309941817121, guid: 5668f1440ef22a94f80e244d7c446cb9,
+      type: 3}
+  - visualId: Weapon_Drill_01
+    prefab: {fileID: 6448749972876946676, guid: cfdbd28642c9f0b47b339adcb746cd14,
+      type: 3}
+  - visualId: Weapon_VehicleDrill_01
+    prefab: {fileID: 3473351172245524253, guid: 829cde0cbacca5b41bad066d7acc206d,
+      type: 3}

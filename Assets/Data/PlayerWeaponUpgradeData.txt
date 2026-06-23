@@ -1,0 +1,4 @@
+WeaponLevelId	MiningInterval	MaxTargetsPerHit	CarryLimit	WeaponVisualId	Note
+WeaponLevel_00	0.5	1	15	Weapon_Pickaxe_01	기본 곡괭이. 게임 시작 시 기본 장착
+WeaponLevel_01	0.4	5	30	Weapon_Drill_01	무기 강화 1단계. 드릴 장착
+WeaponLevel_02	0.35	60	20	Weapon_VehicleDrill_01	무기 강화 2단계. 차량 드릴 장착
