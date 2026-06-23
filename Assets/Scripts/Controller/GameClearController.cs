@@ -136,10 +136,13 @@ public sealed class GameClearController : MonoBehaviour
         if (!reloadCurrentScene)
             return;
 
-        Time.timeScale = 1f;
-
         if (SaveManager.Instance != null)
-            SaveManager.Instance.ClearSave();
+        {
+            SaveManager.Instance.ResetProgressAndReloadCurrentScene();
+            return;
+        }
+
+        Time.timeScale = 1f;
 
         int activeSceneIndex = SceneManager.GetActiveScene().buildIndex;
         SceneManager.LoadScene(activeSceneIndex);
