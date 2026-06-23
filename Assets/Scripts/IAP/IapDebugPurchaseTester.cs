@@ -1,46 +1,41 @@
 using UnityEngine;
 
 /// <summary>
-/// Play Console/IAP 연동 전 에디터에서 상품 효과를 테스트하기 위한 디버그 버튼용 스크립트입니다.
-/// 실제 출시 UI에는 노출하지 않는 것을 권장합니다.
+/// Purchase button bridge.
+/// Editor/development builds grant rewards instantly for testing; release builds open the real store flow.
 /// </summary>
 public sealed class IapDebugPurchaseTester : MonoBehaviour
 {
     [SerializeField] private IapRewardExecutor rewardExecutor;
+    [SerializeField] private UnityIapPurchaseService purchaseService;
 
     private void Awake()
     {
-        if (!CanRunTestActions())
-        {
-            enabled = false;
-            gameObject.SetActive(false);
-            return;
-        }
-
-        if (rewardExecutor == null)
-            rewardExecutor = FindFirstObjectByType<IapRewardExecutor>();
+        ResolveReferencesIfNeeded();
     }
 
     public void SimulateGoldBoostPurchase()
     {
-        if (!CanRunTestActions())
+        if (CanRunTestActions())
+        {
+            ExecuteDebugReward(IapProductIds.GoldBoostSubscription);
             return;
+        }
 
-        if (rewardExecutor == null)
-            return;
-
-        rewardExecutor.ExecutePurchasedProduct(IapProductIds.GoldBoostSubscription);
+        ResolveReferencesIfNeeded();
+        purchaseService?.BuyGoldBoostSubscription();
     }
 
     public void SimulatePremiumWorkerPurchase()
     {
-        if (!CanRunTestActions())
+        if (CanRunTestActions())
+        {
+            ExecuteDebugReward(IapProductIds.PremiumWorkerUnlock);
             return;
+        }
 
-        if (rewardExecutor == null)
-            return;
-
-        rewardExecutor.ExecutePurchasedProduct(IapProductIds.PremiumWorkerUnlock);
+        ResolveReferencesIfNeeded();
+        purchaseService?.BuyPremiumWorkerUnlock();
     }
 
     public void ClearGoldBoostForTest()
@@ -63,6 +58,23 @@ public sealed class IapDebugPurchaseTester : MonoBehaviour
 
         if (controller != null)
             controller.ClearUnlockForTest();
+    }
+
+    private void ExecuteDebugReward(string productId)
+    {
+        ResolveReferencesIfNeeded();
+
+        if (rewardExecutor != null)
+            rewardExecutor.ExecutePurchasedProduct(productId);
+    }
+
+    private void ResolveReferencesIfNeeded()
+    {
+        if (rewardExecutor == null)
+            rewardExecutor = FindFirstObjectByType<IapRewardExecutor>();
+
+        if (purchaseService == null)
+            purchaseService = UnityIapPurchaseService.GetOrCreate();
     }
 
     private static bool CanRunTestActions()
