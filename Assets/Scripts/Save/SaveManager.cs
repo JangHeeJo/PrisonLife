@@ -131,6 +131,7 @@ public sealed class SaveManager : MonoBehaviour
     {
         currentData = new GameSaveData();
         NormalizeCurrentData();
+        ResetRuntimePurchaseState();
 
         DeleteIfExists(SavePath);
         DeleteIfExists(TempSavePath);
@@ -154,6 +155,20 @@ public sealed class SaveManager : MonoBehaviour
 
         int activeSceneIndex = SceneManager.GetActiveScene().buildIndex;
         SceneManager.LoadScene(activeSceneIndex);
+    }
+
+    private void ResetRuntimePurchaseState()
+    {
+        IapOfferPopupController.ResetRuntimeStateForNewGame();
+
+        if (GoldMultiplierProvider.Instance != null)
+            GoldMultiplierProvider.Instance.RefreshFromSave();
+
+        PremiumWorkerUnlockController[] premiumWorkerControllers =
+            FindObjectsByType<PremiumWorkerUnlockController>(FindObjectsSortMode.None);
+
+        for (int i = 0; i < premiumWorkerControllers.Length; i++)
+            premiumWorkerControllers[i].RefreshFromSave();
     }
 
     private void CreateNewSaveData(string reason)

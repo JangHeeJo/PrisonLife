@@ -20,6 +20,9 @@ public sealed class IapOfferPopupController : MonoBehaviour
 
     private static IapOfferPopupController instance;
 
+    public static bool HasPendingOrVisibleOffer =>
+        instance != null && (instance.isShowing || instance.currentOffer != OfferType.None);
+
     [Header("Timing")]
     [SerializeField, Min(0f)] private float firstMoneyOfferDelay = 0.35f;
     [SerializeField, Min(0f)] private float workerDepositOfferDelay = 0.15f;
@@ -120,6 +123,31 @@ public sealed class IapOfferPopupController : MonoBehaviour
             instance = null;
 
         disposables.Dispose();
+    }
+
+    public static bool ShouldPrioritizeGoldBoostOffer()
+    {
+        GameSaveData data = GetSaveData();
+        if (data == null)
+            return false;
+
+        if (IapEntitlementState.IsActive(data, IapProductIds.GoldBoostSubscription))
+            return false;
+
+        if (instance != null && instance.ShouldIgnoreSavedOfferHistory())
+            return !instance.goldOfferShownThisSession;
+
+        return !data.shownGoldBoostFirstMoneyOffer;
+    }
+
+    public static void ResetRuntimeStateForNewGame()
+    {
+        if (instance == null)
+            return;
+
+        instance.goldOfferShownThisSession = false;
+        instance.workerOfferShownThisSession = false;
+        instance.HidePopup();
     }
 
     private void TrySubscribe()
