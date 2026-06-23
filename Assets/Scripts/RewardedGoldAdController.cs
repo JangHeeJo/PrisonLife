@@ -133,9 +133,6 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
         if (amount > 0)
         {
-            if (IapOfferPopupController.ShouldPrioritizeGoldBoostOffer())
-                return;
-
             ShowDelayedAsync().Forget();
         }
         else
@@ -163,15 +160,6 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
             if (goldHudView == null || !goldHudView.HasRewardableGold)
                 return;
-
-            if (IapOfferPopupController.HasPendingOrVisibleOffer ||
-                IapOfferPopupController.ShouldPrioritizeGoldBoostOffer())
-            {
-                if (logState)
-                    Debug.Log("[RewardedGoldAdController] Gold boost offer has priority; rewarded ad popup skipped.", this);
-
-                return;
-            }
 
             if (adService != null && !adService.IsAdReady && loadAdWhenNotReady)
                 adService.LoadAd();
@@ -330,6 +318,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
             if (rewarded)
             {
                 bool claimed = goldHudView.TryClaimDoubleGoldReward();
+                GoldMultiplierProvider.Instance?.GrantAdBoostForOneDay();
 
                 if (logState)
                     Debug.Log($"[RewardedGoldAdController] Reward claimed: {claimed}", this);
