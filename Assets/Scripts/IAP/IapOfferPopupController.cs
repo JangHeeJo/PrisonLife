@@ -211,15 +211,15 @@ public sealed class IapOfferPopupController : MonoBehaviour
         switch (offerType)
         {
             case OfferType.GoldBoost:
-                titleText.text = "골드 부스트";
-                messageText.text = "획득 골드를 1.5배로 늘릴까요?";
-                buyButtonText.text = "구매";
+                titleText.text = "Gold Boost";
+                messageText.text = "Boost all gold earnings by 1.5x?";
+                buyButtonText.text = "Buy";
                 break;
 
             case OfferType.PremiumWorker:
-                titleText.text = "프리미엄 작업자";
-                messageText.text = "프리미엄 작업자를 해금해 자동화를 빠르게 시작할까요?";
-                buyButtonText.text = "해금";
+                titleText.text = "Premium Worker";
+                messageText.text = "Unlock a premium worker for faster automation?";
+                buyButtonText.text = "Unlock";
                 break;
 
             default:
@@ -227,7 +227,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
                 return;
         }
 
-        closeButtonText.text = "나중에";
+        closeButtonText.text = "Later";
         root.SetActive(true);
         Log($"Showing offer: {offerType}");
     }
