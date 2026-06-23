@@ -35,6 +35,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool logState;
+    [SerializeField] private bool ignoreSavedOfferHistoryInDebugBuilds = true;
 
     private readonly CompositeDisposable disposables = new();
 
@@ -48,6 +49,8 @@ public sealed class IapOfferPopupController : MonoBehaviour
     private TMP_Text closeButtonText;
 
     private bool subscribed;
+    private bool goldOfferShownThisSession;
+    private bool workerOfferShownThisSession;
     private bool isShowing;
     private OfferType currentOffer;
     private float pendingShowTime;
@@ -150,7 +153,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
         if (data == null)
             return;
 
-        if (data.shownGoldBoostFirstMoneyOffer)
+        if (HasAlreadyShownGoldOffer(data))
             return;
 
         if (IsEntitlementActive(IapProductIds.GoldBoostSubscription))
@@ -160,6 +163,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
         }
 
         MarkGoldOfferShown(data);
+        goldOfferShownThisSession = true;
         QueueOffer(OfferType.GoldBoost, firstMoneyOfferDelay);
     }
 
@@ -175,7 +179,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
         if (data == null)
             return;
 
-        if (data.shownPremiumWorkerFirstDepositOffer)
+        if (HasAlreadyShownWorkerOffer(data))
             return;
 
         if (IsEntitlementActive(IapProductIds.PremiumWorkerUnlock))
@@ -185,6 +189,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
         }
 
         MarkWorkerOfferShown(data);
+        workerOfferShownThisSession = true;
         QueueOffer(OfferType.PremiumWorker, workerDepositOfferDelay);
     }
 
@@ -412,6 +417,28 @@ public sealed class IapOfferPopupController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool HasAlreadyShownGoldOffer(GameSaveData data)
+    {
+        if (ShouldIgnoreSavedOfferHistory())
+            return goldOfferShownThisSession;
+
+        return data.shownGoldBoostFirstMoneyOffer;
+    }
+
+    private bool HasAlreadyShownWorkerOffer(GameSaveData data)
+    {
+        if (ShouldIgnoreSavedOfferHistory())
+            return workerOfferShownThisSession;
+
+        return data.shownPremiumWorkerFirstDepositOffer;
+    }
+
+    private bool ShouldIgnoreSavedOfferHistory()
+    {
+        return ignoreSavedOfferHistoryInDebugBuilds &&
+               (Application.isEditor || Debug.isDebugBuild);
     }
 
     private static GameSaveData GetSaveData()
