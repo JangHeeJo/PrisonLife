@@ -38,6 +38,10 @@ public sealed class GameSaveData
 
     [Header("Purchase Entitlements")]
     public List<IapEntitlementSaveData> iapEntitlements = new List<IapEntitlementSaveData>();
+
+    [Header("Purchase Offer History")]
+    public bool shownGoldBoostFirstMoneyOffer;
+    public bool shownPremiumWorkerFirstDepositOffer;
 }
 
 [Serializable]
