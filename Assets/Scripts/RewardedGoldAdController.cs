@@ -2,23 +2,12 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 골드 2배 광고 선택 팝업 컨트롤러입니다.
-///
-/// UI 흐름:
-/// - Money 획득 후 기본 골드는 즉시 지급됩니다.
-/// - 최근 획득 골드가 있으면 팝업을 표시합니다.
-/// - agree: 광고 시청 후 최근 획득 골드만큼 추가 지급합니다.
-/// - no: 추가 보상을 포기하고 팝업을 닫습니다.
-///
-/// 주의:
-/// - 이 스크립트는 꺼지는 PopupRoot에 붙이지 마세요.
-/// - 항상 켜져 있는 Canvas, UIManager, Managers 오브젝트에 붙이고,
-///   PopupRoot만 SetActive로 켜고 끄는 구조로 사용하세요.
+/// Controls the rewarded-ad popup shown after the player earns gold.
+/// Watching the ad grants the regular double-gold reward and a timed gold boost.
 /// </summary>
 public sealed class RewardedGoldAdController : MonoBehaviour
 {
@@ -45,14 +34,14 @@ public sealed class RewardedGoldAdController : MonoBehaviour
     [SerializeField] private string noText = "no";
 
     [Header("Timing")]
-    [Tooltip("돈 획득 후 팝업이 표시되기까지의 지연 시간입니다.")]
+    [Tooltip("Delay before showing the popup after gold is earned.")]
     [SerializeField] private float showDelaySeconds = 0.5f;
 
-    [Tooltip("팝업 페이드 시간입니다.")]
+    [Tooltip("Fade duration for opening and closing the popup.")]
     [SerializeField] private float fadeDuration = 0.15f;
 
     [Header("Option")]
-    [Tooltip("광고가 준비되지 않았을 때 자동으로 광고 로드를 재시도합니다.")]
+    [Tooltip("Automatically request a new ad when the popup opens and no ad is ready.")]
     [SerializeField] private bool loadAdWhenNotReady = true;
 
     [Header("Debug")]
@@ -132,13 +121,9 @@ public sealed class RewardedGoldAdController : MonoBehaviour
             Debug.Log($"[RewardedGoldAdController] RewardableGoldChanged: {amount}", this);
 
         if (amount > 0)
-        {
             ShowDelayedAsync().Forget();
-        }
         else
-        {
             HideAsync().Forget();
-        }
 
         RefreshUI();
     }
@@ -276,10 +261,12 @@ public sealed class RewardedGoldAdController : MonoBehaviour
     {
         WatchAdAsync().Forget();
     }
+
     public void Click()
     {
-        Debug.Log("클릭 되었음");
+        // Legacy scene event hook. Runtime wiring uses OnClickAgree.
     }
+
     private async UniTaskVoid WatchAdAsync()
     {
         if (isProcessing)
@@ -308,9 +295,6 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
         try
         {
-            // 광고가 뜨기 전에 선택 팝업을 먼저 닫습니다.
-            // 주의: 여기서는 ClearRewardableGold를 호출하지 않습니다.
-            // 광고 성공 시 추가 보상을 줘야 하기 때문입니다.
             await HideAsync();
 
             bool rewarded = await adService.ShowRewardedAsync(lifeCts.Token);
@@ -328,8 +312,6 @@ public sealed class RewardedGoldAdController : MonoBehaviour
                 if (logState)
                     Debug.Log("[RewardedGoldAdController] Ad was closed without reward.", this);
 
-                // 광고를 끝까지 안 봤거나 보상 실패한 경우,
-                // 아직 보상 선택권이 남아 있으므로 다시 팝업을 보여줍니다.
                 if (goldHudView.HasRewardableGold && lifeCts != null)
                     await ShowAsync(lifeCts.Token);
             }
@@ -342,8 +324,6 @@ public sealed class RewardedGoldAdController : MonoBehaviour
             isProcessing = false;
             RefreshUI();
 
-            // 보상 성공 시 TryClaimDoubleGoldReward에서 lastEarnedGold가 0이 되므로
-            // 팝업은 닫힌 상태로 유지됩니다.
             if (goldHudView == null || !goldHudView.HasRewardableGold)
                 await HideAsync();
         }

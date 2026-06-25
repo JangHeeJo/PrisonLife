@@ -9,7 +9,7 @@ using UnityEngine;
 [Serializable]
 public sealed class GameSaveData
 {
-    public int version = 1;
+    public int version = 2;
 
     [Header("Currency")]
     public int gold;

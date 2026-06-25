@@ -4,14 +4,9 @@ using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// 골드 UI를 관리합니다.
-///
-/// 역할:
-/// - 저장된 골드를 불러와 UI에 표시합니다.
-/// - Money 획득 시 골드를 증가시킵니다.
-/// - IAP 골드 배율이 활성화되어 있으면 획득 골드에 배율을 적용합니다.
-/// - 최근 획득 골드를 저장해서 광고 2배 보상에 사용합니다.
-/// - 골드가 변경될 때 SaveManager에 저장합니다.
+/// Displays and persists the player's gold.
+/// Money pickups are converted into gold, then multiplied by active boosts.
+/// The latest earned amount is kept so rewarded ads can grant one extra copy.
 /// </summary>
 public sealed class GoldHudView : MonoBehaviour
 {
@@ -19,18 +14,18 @@ public sealed class GoldHudView : MonoBehaviour
     [SerializeField] private TMP_Text goldText;
 
     [Header("Gold Rule")]
-    [Tooltip("Money 1개당 증가할 골드 수량입니다.")]
+    [Tooltip("Gold awarded per 1 Money resource before multipliers.")]
     [SerializeField] private int goldPerMoney = 1;
 
-    [Header("IAP Multiplier")]
-    [Tooltip("비워두면 GoldMultiplierProvider.Instance를 사용합니다.")]
+    [Header("Multiplier")]
+    [Tooltip("Leave empty to use GoldMultiplierProvider.Instance.")]
     [SerializeField] private GoldMultiplierProvider goldMultiplierProvider;
 
     [Header("Save")]
-    [Tooltip("true면 SaveManager에서 골드를 로드/저장합니다.")]
+    [Tooltip("Load and save gold through SaveManager.")]
     [SerializeField] private bool useSaveData = true;
 
-    [Tooltip("골드가 바뀔 때마다 즉시 저장합니다. 모바일 출시용으로는 true 추천.")]
+    [Tooltip("Save immediately whenever gold changes. Recommended for mobile builds.")]
     [SerializeField] private bool saveImmediatelyOnChange = true;
 
     [Header("Debug")]
@@ -49,9 +44,7 @@ public sealed class GoldHudView : MonoBehaviour
 
     private void Awake()
     {
-        if (goldMultiplierProvider == null)
-            goldMultiplierProvider = GoldMultiplierProvider.Instance;
-
+        ResolveMultiplierProvider();
         TryLoadGoldFromSave();
         RefreshText();
     }
@@ -63,10 +56,7 @@ public sealed class GoldHudView : MonoBehaviour
 
     private void Start()
     {
-        if (goldMultiplierProvider == null)
-            goldMultiplierProvider = GoldMultiplierProvider.Instance;
-
-        // SaveManager / GameStateSignals 생성 순서 대비
+        ResolveMultiplierProvider();
         TryLoadGoldFromSave();
         TrySubscribe();
         RefreshText();
@@ -105,17 +95,13 @@ public sealed class GoldHudView : MonoBehaviour
 
     private void TryLoadGoldFromSave()
     {
-        if (loadedFromSave)
-            return;
-
-        if (!useSaveData)
+        if (loadedFromSave || !useSaveData)
             return;
 
         if (SaveManager.Instance == null)
             return;
 
         GameSaveData data = SaveManager.Instance.CurrentData;
-
         if (data == null)
             return;
 
@@ -128,29 +114,34 @@ public sealed class GoldHudView : MonoBehaviour
         if (signal.ResourceType != ResourceType.Money)
             return;
 
-        float multiplier = GetCurrentGoldMultiplier();
-
-        int earnedGold = Mathf.RoundToInt(signal.Amount * goldPerMoney * multiplier);
-        earnedGold = Mathf.Max(0, earnedGold);
-
-        // 기본 골드는 즉시 지급합니다.
+        int earnedGold = CalculateGoldReward(signal.Amount);
         AddGold(earnedGold);
 
-        // 광고 2배 보상용으로 최근 획득 골드량을 저장합니다.
-        // 배율이 적용된 최종 획득량 기준으로 2배 보상을 줍니다.
         lastEarnedGold = earnedGold;
         RewardableGoldChanged?.Invoke(lastEarnedGold);
     }
 
+    private int CalculateGoldReward(int moneyAmount)
+    {
+        float multiplier = GetCurrentGoldMultiplier();
+        int earnedGold = Mathf.RoundToInt(moneyAmount * goldPerMoney * multiplier);
+        return Mathf.Max(0, earnedGold);
+    }
+
     private float GetCurrentGoldMultiplier()
     {
-        if (goldMultiplierProvider == null)
-            goldMultiplierProvider = GoldMultiplierProvider.Instance;
+        ResolveMultiplierProvider();
 
         if (goldMultiplierProvider == null)
             return 1f;
 
         return Mathf.Max(0f, goldMultiplierProvider.CurrentMultiplier);
+    }
+
+    private void ResolveMultiplierProvider()
+    {
+        if (goldMultiplierProvider == null)
+            goldMultiplierProvider = GoldMultiplierProvider.Instance;
     }
 
     public void AddGold(int amount)
@@ -180,7 +171,6 @@ public sealed class GoldHudView : MonoBehaviour
         SaveGoldIfNeeded();
 
         GoldChanged?.Invoke(currentGold);
-
         return true;
     }
 
@@ -194,10 +184,6 @@ public sealed class GoldHudView : MonoBehaviour
         GoldChanged?.Invoke(currentGold);
     }
 
-    /// <summary>
-    /// 광고 성공 시 최근 획득 골드만큼 추가 지급합니다.
-    /// 예: 기본 +100 지급 후 광고 성공 시 추가 +100 지급.
-    /// </summary>
     public bool TryClaimDoubleGoldReward()
     {
         if (lastEarnedGold <= 0)
@@ -205,14 +191,9 @@ public sealed class GoldHudView : MonoBehaviour
 
         AddGold(lastEarnedGold);
         ClearRewardableGold();
-
         return true;
     }
 
-    /// <summary>
-    /// 광고를 보지 않거나, 보상 선택 UI를 닫았을 때 호출합니다.
-    /// 기본 골드는 이미 지급된 상태이므로 lastEarnedGold만 초기화합니다.
-    /// </summary>
     public void ClearRewardableGold()
     {
         if (lastEarnedGold <= 0)
@@ -224,10 +205,8 @@ public sealed class GoldHudView : MonoBehaviour
 
     private void SaveGoldIfNeeded()
     {
-        if (!saveImmediatelyOnChange)
-            return;
-
-        SaveGold();
+        if (saveImmediatelyOnChange)
+            SaveGold();
     }
 
     private void SaveGold()
@@ -235,14 +214,10 @@ public sealed class GoldHudView : MonoBehaviour
         if (!useSaveData)
             return;
 
-        if (SaveManager.Instance == null)
-            return;
-
-        if (SaveManager.Instance.IsResetting)
+        if (SaveManager.Instance == null || SaveManager.Instance.IsResetting)
             return;
 
         GameSaveData data = SaveManager.Instance.CurrentData;
-
         if (data == null)
             return;
 

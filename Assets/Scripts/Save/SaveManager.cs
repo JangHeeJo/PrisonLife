@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -15,12 +15,12 @@ using UnityEngine.SceneManagement;
 public sealed class SaveManager : MonoBehaviour
 {
     private const string SaveFileName = "save_data.json";
-    private const int CurrentSaveVersion = 1;
+    private const int CurrentSaveVersion = 2;
 
     public static SaveManager Instance { get; private set; }
 
     [Header("Debug")]
-    [SerializeField] private bool logState = true;
+    [SerializeField] private bool logState;
 
     private GameSaveData currentData;
     private bool isResetting;
@@ -205,7 +205,7 @@ public sealed class SaveManager : MonoBehaviour
     {
         EnsureCurrentData();
 
-        if (currentData.version <= 0)
+        if (currentData.version < CurrentSaveVersion)
             currentData.version = CurrentSaveVersion;
 
         currentData.completedUnlockIds = EnsureList(currentData.completedUnlockIds);
