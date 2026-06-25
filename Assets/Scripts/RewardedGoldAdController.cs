@@ -11,6 +11,11 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class RewardedGoldAdController : MonoBehaviour
 {
+    private static RewardedGoldAdController instance;
+
+    public static bool HasActivePrompt =>
+        instance != null && (instance.hasPendingShow || instance.isShowing || instance.isProcessing);
+
     [Header("References")]
     [SerializeField] private AdMobRewardedAdService adService;
     [SerializeField] private GoldHudView goldHudView;
@@ -51,11 +56,14 @@ public sealed class RewardedGoldAdController : MonoBehaviour
     private CancellationTokenSource showCts;
     private CancellationTokenSource animationCts;
 
+    private bool hasPendingShow;
     private bool isShowing;
     private bool isProcessing;
 
     private void Awake()
     {
+        instance = this;
+
         if (popupRoot == null && canvasGroup != null)
             popupRoot = canvasGroup.gameObject;
 
@@ -108,6 +116,8 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (instance == this)
+            instance = null;
         if (agreeButton != null)
             agreeButton.onClick.RemoveListener(OnClickAgree);
 
@@ -121,9 +131,15 @@ public sealed class RewardedGoldAdController : MonoBehaviour
             Debug.Log($"[RewardedGoldAdController] RewardableGoldChanged: {amount}", this);
 
         if (amount > 0)
+        {
+            hasPendingShow = true;
             ShowDelayedAsync().Forget();
+        }
         else
+        {
+            hasPendingShow = false;
             HideAsync().Forget();
+        }
 
         RefreshUI();
     }
@@ -149,6 +165,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
             if (adService != null && !adService.IsAdReady && loadAdWhenNotReady)
                 adService.LoadAd();
 
+            hasPendingShow = false;
             await ShowAsync(token);
         }
         catch (OperationCanceledException)
@@ -158,6 +175,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
     private async UniTask ShowAsync(CancellationToken token)
     {
+        hasPendingShow = false;
         if (isShowing)
         {
             RefreshUI();
@@ -244,6 +262,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
     private void HideImmediate()
     {
+        hasPendingShow = false;
         isShowing = false;
 
         if (canvasGroup != null)

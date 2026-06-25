@@ -22,7 +22,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
 
 
     [Header("Timing")]
-    [SerializeField, Min(0f)] private float firstMoneyOfferDelay = 0.35f;
+    [SerializeField, Min(0f)] private float firstMoneyOfferDelay = 0.75f;
     [SerializeField, Min(0f)] private float workerDepositOfferDelay = 0.15f;
 
     [Header("Worker Unlock Detection")]
@@ -106,6 +106,9 @@ public sealed class IapOfferPopupController : MonoBehaviour
         if (Time.unscaledTime < pendingShowTime)
             return;
 
+        if (RewardedGoldAdController.HasActivePrompt)
+            return;
+
         ShowPopup(currentOffer);
     }
 
@@ -173,9 +176,6 @@ public sealed class IapOfferPopupController : MonoBehaviour
             MarkGoldOfferShown(data);
             return;
         }
-
-        MarkGoldOfferShown(data);
-        goldOfferShownThisSession = true;
         QueueOffer(OfferType.GoldBoost, firstMoneyOfferDelay);
     }
 
@@ -199,9 +199,6 @@ public sealed class IapOfferPopupController : MonoBehaviour
             MarkWorkerOfferShown(data);
             return;
         }
-
-        MarkWorkerOfferShown(data);
-        workerOfferShownThisSession = true;
         QueueOffer(OfferType.PremiumWorker, workerDepositOfferDelay);
     }
 
@@ -225,6 +222,8 @@ public sealed class IapOfferPopupController : MonoBehaviour
         currentOffer = offerType;
         isShowing = true;
 
+        MarkOfferShown(offerType);
+
         switch (offerType)
         {
             case OfferType.GoldBoost:
@@ -247,6 +246,28 @@ public sealed class IapOfferPopupController : MonoBehaviour
         closeButtonText.text = "Later";
         root.SetActive(true);
         Log($"Showing offer: {offerType}");
+    }
+
+    private void MarkOfferShown(OfferType offerType)
+    {
+        GameSaveData data = GetSaveData();
+        if (data == null)
+            return;
+
+        switch (offerType)
+        {
+            case OfferType.GoldBoost:
+                goldOfferShownThisSession = true;
+                if (!ShouldIgnoreSavedOfferHistory())
+                    MarkGoldOfferShown(data);
+                break;
+
+            case OfferType.PremiumWorker:
+                workerOfferShownThisSession = true;
+                if (!ShouldIgnoreSavedOfferHistory())
+                    MarkWorkerOfferShown(data);
+                break;
+        }
     }
 
     private void OnBuyClicked()
