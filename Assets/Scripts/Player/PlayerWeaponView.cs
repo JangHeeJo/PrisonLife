@@ -1,13 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 플레이어 무기 모델 표시를 담당하는 View입니다.
-/// 
-/// 역할:
-/// - WeaponVisualId로 무기 프리팹을 찾습니다.
-/// - 기존 무기 모델을 제거합니다.
-/// - WeaponSocket 하위에 새 무기 모델을 생성합니다.
-/// - 생성된 무기 안의 PlayerMiningDetector를 찾아 반환합니다.
+/// Swaps the player's weapon visual and exposes the mining detector on the equipped model.
 /// </summary>
 public sealed class PlayerWeaponView : MonoBehaviour
 {
@@ -15,16 +9,19 @@ public sealed class PlayerWeaponView : MonoBehaviour
     [SerializeField] private WeaponVisualDatabase visualDatabase;
 
     [Header("Socket")]
-    [Tooltip("무기 프리팹이 생성될 위치입니다. 이 스크립트가 WeaponSocket에 붙어 있다면 비워둬도 됩니다.")]
+    [Tooltip("Parent transform used for spawned weapon visuals. Defaults to this transform.")]
     [SerializeField] private Transform weaponSocket;
 
     [Header("Visual Root")]
-    [Tooltip("무기 프리팹 안에서 모델만 담고 있는 자식 이름입니다.")]
+    [Tooltip("Child object name used to hide or show only the visible weapon model.")]
     [SerializeField] private string visualRootName = "VisualRoot";
 
     [Header("Option")]
-    [Tooltip("채굴 대상이 없을 때 무기 모델만 숨길지 여부입니다. MiningDetector는 꺼지면 안 됩니다.")]
+    [Tooltip("When enabled, SetVisible toggles the visual root while keeping mining detectors active.")]
     [SerializeField] private bool allowVisibilityControl = true;
+
+    [Header("Debug")]
+    [SerializeField] private bool logState;
 
     private GameObject currentWeaponInstance;
     private GameObject currentVisualRoot;
@@ -40,13 +37,9 @@ public sealed class PlayerWeaponView : MonoBehaviour
             weaponSocket = transform;
     }
 
-    /// <summary>
-    /// WeaponVisualId에 해당하는 무기 모델로 교체합니다.
-    /// 교체 후 현재 무기 프리팹 안의 PlayerMiningDetector를 반환합니다.
-    /// </summary>
     public PlayerMiningDetector ApplyVisual(string weaponVisualId)
     {
-        Debug.Log($"[PlayerWeaponView] ApplyVisual called. VisualId: {weaponVisualId}", this);
+        Log($"ApplyVisual called. VisualId: {weaponVisualId}");
 
         if (string.IsNullOrEmpty(weaponVisualId))
         {
@@ -68,12 +61,11 @@ public sealed class PlayerWeaponView : MonoBehaviour
 
         if (currentWeaponInstance != null && currentVisualId == weaponVisualId)
         {
-            Debug.Log($"[PlayerWeaponView] Same weapon already equipped: {weaponVisualId}", this);
+            Log($"Same weapon already equipped: {weaponVisualId}");
             return currentMiningDetector;
         }
 
         GameObject weaponPrefab = visualDatabase.GetPrefab(weaponVisualId);
-
         if (weaponPrefab == null)
         {
             Debug.LogWarning($"[PlayerWeaponView] Weapon prefab not found. VisualId: {weaponVisualId}", this);
@@ -85,36 +77,22 @@ public sealed class PlayerWeaponView : MonoBehaviour
         currentWeaponInstance = Instantiate(weaponPrefab, weaponSocket);
         currentWeaponInstance.name = weaponPrefab.name;
         currentVisualId = weaponVisualId;
-
-        //currentWeaponInstance.transform.localPosition = Vector3.zero;
-        //currentWeaponInstance.transform.localRotation = Quaternion.identity;
-        //currentWeaponInstance.transform.localScale = Vector3.one;
-
         currentWeaponInstance.SetActive(true);
 
         CacheCurrentWeaponParts();
 
-        Debug.Log(
-            $"[PlayerWeaponView] Weapon created. " +
-            $"VisualId: {weaponVisualId}, " +
+        Log(
+            $"Weapon created. VisualId: {weaponVisualId}, " +
             $"Instance: {currentWeaponInstance.name}, " +
-            $"Detector: {(currentMiningDetector == null ? "NULL" : currentMiningDetector.name)}",
-            this
+            $"Detector: {(currentMiningDetector == null ? "NULL" : currentMiningDetector.name)}"
         );
 
         return currentMiningDetector;
     }
 
-    /// <summary>
-    /// 현재 무기 모델만 보이거나 숨깁니다.
-    /// 무기 전체를 끄면 MiningDetector도 꺼지므로 VisualRoot만 제어합니다.
-    /// </summary>
     public void SetVisible(bool visible)
     {
-        if (!allowVisibilityControl)
-            return;
-
-        if (currentVisualRoot == null)
+        if (!allowVisibilityControl || currentVisualRoot == null)
             return;
 
         if (currentVisualRoot.activeSelf != visible)
@@ -161,5 +139,11 @@ public sealed class PlayerWeaponView : MonoBehaviour
         currentVisualRoot = null;
         currentMiningDetector = null;
         currentVisualId = string.Empty;
+    }
+
+    private void Log(string message)
+    {
+        if (logState)
+            Debug.Log($"[PlayerWeaponView] {message}", this);
     }
 }

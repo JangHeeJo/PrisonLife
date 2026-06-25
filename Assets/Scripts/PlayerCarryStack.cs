@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using R3;
 using UnityEngine;
@@ -63,6 +63,9 @@ public class PlayerCarryStack : MonoBehaviour
         ResourceType.Ore,
         ResourceType.Money
     };
+
+    [Header("Debug")]
+    [SerializeField] private bool logState;
 
     private IDisposable carryLimitSubscription;
 
@@ -318,7 +321,8 @@ public class PlayerCarryStack : MonoBehaviour
 
         RefreshStackPositions();
 
-        Debug.Log($"[PlayerCarryStack] ApplyCarryLimit: {safeLimit}", this);
+        if (logState)
+            Debug.Log($"[PlayerCarryStack] ApplyCarryLimit: {safeLimit}", this);
     }
 
     private void TrySubscribeCarryLimit()
