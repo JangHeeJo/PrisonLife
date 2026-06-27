@@ -1457,6 +1457,7 @@ MonoBehaviour:
   androidRewardedAdUnitId: ca-app-pub-3940256099942544/5224354917
   iosRewardedAdUnitId: ca-app-pub-3940256099942544/1712485313
   loadOnStart: 1
+  allowTestAdUnitIdInReleaseBuild: 1
   logState: 0
 --- !u!1001 &100090717
 PrefabInstance:
