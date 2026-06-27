@@ -15,6 +15,9 @@ public class HandcuffMachine : MonoBehaviour, IResourceReceiver, IResourceProvid
     [SerializeField] private int oreCostPerHandcuff = 1;
     [SerializeField] private float productionInterval = 1f;
 
+    [Header("Diagnostics")]
+    [SerializeField] private bool logState;
+
     [Header("Stack View")]
     [SerializeField] private ResourceStackView oreStackView;
     [SerializeField] private ResourceStackView handcuffStackView;
@@ -92,11 +95,14 @@ public class HandcuffMachine : MonoBehaviour, IResourceReceiver, IResourceProvid
         if (handcuffStackView != null)
             handcuffStackView.SetMaxCount(handcuffCapacity);
 
-        Debug.Log(
-            $"[HandcuffMachine] ApplyPointCapacity. " +
-            $"OreCapacity: {oreCapacity}, HandcuffCapacity: {handcuffCapacity}",
-            this
-        );
+        if (logState)
+        {
+            Debug.Log(
+                $"[HandcuffMachine] ApplyPointCapacity. " +
+                $"OreCapacity: {oreCapacity}, HandcuffCapacity: {handcuffCapacity}",
+                this
+            );
+        }
     }
     private void ProduceTick()
     {

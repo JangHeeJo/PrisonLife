@@ -18,6 +18,9 @@ public sealed class PlayerMiningController : MonoBehaviour
     [Header("Default Stats")]
     [SerializeField] private MiningStats currentStats = new MiningStats();
 
+    [Header("Diagnostics")]
+    [SerializeField] private bool logState;
+
     [Header("Visual Option")]
     [SerializeField] private bool showToolOnlyWhenHasTarget = true;
 
@@ -70,10 +73,13 @@ public sealed class PlayerMiningController : MonoBehaviour
         currentMiningDetector = detector;
         miningTimer = 0f;
 
-        Debug.Log(
-            $"[PlayerMiningController] SetDetector: {(detector == null ? "NULL" : detector.name)}",
-            this
-        );
+        if (logState)
+        {
+            Debug.Log(
+                $"[PlayerMiningController] SetDetector: {(detector == null ? "NULL" : detector.name)}",
+                this
+            );
+        }
     }
 
     /// <summary>
@@ -95,13 +101,16 @@ public sealed class PlayerMiningController : MonoBehaviour
 
         miningTimer = 0f;
 
-        Debug.Log(
-            $"[PlayerMiningController] ApplyMiningStats. " +
-            $"Interval: {currentStats.miningInterval}, " +
-            $"Targets: {currentStats.maxTargetsPerHit}, " +
-            $"CarryLimit: {currentStats.carryLimit}",
-            this
-        );
+        if (logState)
+        {
+            Debug.Log(
+                $"[PlayerMiningController] ApplyMiningStats. " +
+                $"Interval: {currentStats.miningInterval}, " +
+                $"Targets: {currentStats.maxTargetsPerHit}, " +
+                $"CarryLimit: {currentStats.carryLimit}",
+                this
+            );
+        }
 
         // 다음 단계에서 PlayerCarryStack 한도 변경 API와 연결 예정.
     }

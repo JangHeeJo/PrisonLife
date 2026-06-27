@@ -45,6 +45,9 @@ public sealed class AutoMinerWorkerUnit : MonoBehaviour, IUnitSpawnContextReceiv
     [Tooltip("회전 속도입니다.")]
     [SerializeField] private float rotateSpeed = 12f;
 
+    [Header("Diagnostics")]
+    [SerializeField] private bool logState;
+
     [Header("Loop")]
     [Tooltip("광석 1개를 DepositPoint에 넣은 뒤 다음 작업까지 기다리는 시간입니다.")]
     [SerializeField] private float waitAfterDeposit = 0.2f;
@@ -78,10 +81,13 @@ public sealed class AutoMinerWorkerUnit : MonoBehaviour, IUnitSpawnContextReceiv
 
         ResetState();
 
-        Debug.Log(
-            $"[AutoMinerWorkerUnit] Initialized. OreTargets: {(oreTargets == null ? 0 : oreTargets.Length)}, DepositPoint: {(oreDepositPoint == null ? "NULL" : oreDepositPoint.name)}",
-            this
-        );
+        if (logState)
+        {
+            Debug.Log(
+                $"[AutoMinerWorkerUnit] Initialized. OreTargets: {(oreTargets == null ? 0 : oreTargets.Length)}, DepositPoint: {(oreDepositPoint == null ? "NULL" : oreDepositPoint.name)}",
+                this
+            );
+        }
     }
 
     private void Update()

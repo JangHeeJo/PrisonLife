@@ -41,6 +41,9 @@ public sealed class UnlockProgressionManager : MonoBehaviour
     [Tooltip("RevealGroup 공개 / Unlock 완료 시 즉시 저장합니다.")]
     [SerializeField] private bool saveImmediately = true;
 
+    [Header("Diagnostics")]
+    [SerializeField] private bool logState;
+
     [Header("Test")]
     [Tooltip("Play 시작 시 테스트 그룹을 바로 공개할지 여부입니다. 출시용은 false 권장입니다.")]
     [SerializeField] private bool revealTestGroupOnStart;
@@ -118,7 +121,7 @@ public sealed class UnlockProgressionManager : MonoBehaviour
         List<UnlockPointData> loadedData = UnlockPointProgressionTableLoader.Load(progressionTable);
         model = new UnlockProgressionModel(loadedData);
 
-        Debug.Log($"[UnlockProgressionManager] Loaded unlock data count: {loadedData.Count}", this);
+        Log($"Loaded unlock data count: {loadedData.Count}");
     }
 
     private void BuildSlotMap()
@@ -256,10 +259,9 @@ public sealed class UnlockProgressionManager : MonoBehaviour
             }
         }
 
-        Debug.Log(
-            $"[UnlockProgressionManager] RestoreUnlockProgressFromSave. " +
-            $"Completed: {completedUnlockIds.Count}, RevealedGroups: {revealedGroupIds.Count}",
-            this
+        Log(
+            $"RestoreUnlockProgressFromSave. " +
+            $"Completed: {completedUnlockIds.Count}, RevealedGroups: {revealedGroupIds.Count}"
         );
     }
 
@@ -357,7 +359,7 @@ public sealed class UnlockProgressionManager : MonoBehaviour
 
         revealedGroupIds.Add(revealGroupId);
 
-        Debug.Log($"[UnlockProgressionManager] RevealGroup: {revealGroupId}, Count: {groupData.Count}", this);
+        Log($"RevealGroup: {revealGroupId}, Count: {groupData.Count}");
 
         for (int i = 0; i < groupData.Count; i++)
         {
@@ -431,7 +433,7 @@ public sealed class UnlockProgressionManager : MonoBehaviour
 
         completedUnlockIds.Add(data.unlockId);
 
-        Debug.Log($"[UnlockProgressionManager] Unlock completed: {data.unlockId}", this);
+        Log($"Unlock completed: {data.unlockId}");
 
         if (resultExecutor != null)
             resultExecutor.Execute(data);
@@ -517,6 +519,12 @@ public sealed class UnlockProgressionManager : MonoBehaviour
         }
 
         SaveManager.Instance.MarkDirtyAndSave();
+    }
+
+    private void Log(string message)
+    {
+        if (logState)
+            Debug.Log($"[UnlockProgressionManager] {message}", this);
     }
 
     private void DisposePresenterByUnlockId(string unlockId)
