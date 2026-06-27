@@ -21,9 +21,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
     private static IapOfferPopupController instance;
 
 
-    [Header("Timing")]
-    [SerializeField, Min(0f)] private float firstMoneyOfferDelay = 0.05f;
-    [SerializeField, Min(0f)] private float workerDepositOfferDelay = 0.15f;
+    [Header("Timing")]    [SerializeField, Min(0f)] private float workerDepositOfferDelay = 0.15f;
 
     [Header("Worker Unlock Detection")]
     [SerializeField]
@@ -163,20 +161,31 @@ public sealed class IapOfferPopupController : MonoBehaviour
 
     public void NotifyMoneyPickedUpForGoldBoostOffer()
     {
+        ShowGoldBoostOfferNowForMoneyPickup();
+    }
+
+    public void ShowGoldBoostOfferNowForMoneyPickup()
+    {
+        if (isShowing)
+            return;
+
         GameSaveData data = GetSaveData();
-        if (data == null)
-            return;
+        bool shouldUseReleaseGate = !ShouldIgnoreSavedOfferHistory();
 
-        if (HasAlreadyShownGoldOffer(data))
-            return;
-
-        if (ShouldSuppressOfferForActiveEntitlement(IapProductIds.GoldBoostSubscription))
+        if (shouldUseReleaseGate && data != null)
         {
-            MarkGoldOfferShown(data);
-            return;
+            if (HasAlreadyShownGoldOffer(data))
+                return;
+
+            if (IsEntitlementActive(IapProductIds.GoldBoostSubscription))
+            {
+                MarkGoldOfferShown(data);
+                return;
+            }
         }
 
-        QueueOffer(OfferType.GoldBoost, firstMoneyOfferDelay);
+        Debug.Log("[IapOfferPopupController] Showing Gold Boost offer now.", this);
+        ShowPopup(OfferType.GoldBoost);
     }
 
     private void OnResourcePickedUp(ResourceTransactionSignal signal)
