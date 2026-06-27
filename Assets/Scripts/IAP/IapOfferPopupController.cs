@@ -59,16 +59,21 @@ public sealed class IapOfferPopupController : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void EnsureExists()
     {
+        GetOrCreate();
+    }
+
+    public static IapOfferPopupController GetOrCreate()
+    {
         if (instance != null)
-            return;
+            return instance;
 
         IapOfferPopupController existing = FindFirstObjectByType<IapOfferPopupController>();
         if (existing != null)
-            return;
+            return existing;
 
         GameObject controllerObject = new GameObject(nameof(IapOfferPopupController));
         DontDestroyOnLoad(controllerObject);
-        controllerObject.AddComponent<IapOfferPopupController>();
+        return controllerObject.AddComponent<IapOfferPopupController>();
     }
 
     private void Awake()
@@ -302,24 +307,18 @@ public sealed class IapOfferPopupController : MonoBehaviour
         if (root != null)
             return;
 
-        Canvas parentCanvas = FindFirstObjectByType<Canvas>();
-        if (parentCanvas != null)
-        {
-            canvas = parentCanvas;
-        }
-        else
-        {
-            GameObject canvasObject = new GameObject("IapOfferCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            DontDestroyOnLoad(canvasObject);
+        GameObject canvasObject = new GameObject("IapOfferCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        DontDestroyOnLoad(canvasObject);
 
-            canvas = canvasObject.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas = canvasObject.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 5000;
 
-            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(720f, 1280f);
-            scaler.matchWidthOrHeight = 0.5f;
-        }
+        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(720f, 1280f);
+        scaler.matchWidthOrHeight = 0.5f;
 
         root = new GameObject("IapOfferPopup", typeof(RectTransform), typeof(CanvasGroup));
         root.transform.SetParent(canvas.transform, false);

@@ -63,6 +63,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
     private void Awake()
     {
         instance = this;
+        IapOfferPopupController.GetOrCreate();
 
         if (popupRoot == null && canvasGroup != null)
             popupRoot = canvasGroup.gameObject;
