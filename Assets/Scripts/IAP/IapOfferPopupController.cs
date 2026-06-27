@@ -22,7 +22,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
 
 
     [Header("Timing")]
-    [SerializeField, Min(0f)] private float firstMoneyOfferDelay = 0.75f;
+    [SerializeField, Min(0f)] private float firstMoneyOfferDelay = 0.05f;
     [SerializeField, Min(0f)] private float workerDepositOfferDelay = 0.15f;
 
     [Header("Worker Unlock Detection")]
@@ -109,9 +109,6 @@ public sealed class IapOfferPopupController : MonoBehaviour
             return;
 
         if (Time.unscaledTime < pendingShowTime)
-            return;
-
-        if (RewardedGoldAdController.HasActivePrompt)
             return;
 
         ShowPopup(currentOffer);
@@ -319,7 +316,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
         canvas = canvasObject.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.overrideSorting = true;
-        canvas.sortingOrder = 5000;
+        canvas.sortingOrder = 32000;
 
         CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
