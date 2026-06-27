@@ -134,6 +134,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
         if (amount > 0)
         {
             hasPendingShow = true;
+            IapOfferPopupController.GetOrCreate().NotifyMoneyPickedUpForGoldBoostOffer();
             ShowDelayedAsync().Forget();
         }
         else

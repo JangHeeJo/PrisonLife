@@ -164,11 +164,8 @@ public sealed class IapOfferPopupController : MonoBehaviour
         Log("Subscribed to gameplay signals.");
     }
 
-    private void OnResourcePickedUp(ResourceTransactionSignal signal)
+    public void NotifyMoneyPickedUpForGoldBoostOffer()
     {
-        if (signal.ResourceType != ResourceType.Money)
-            return;
-
         GameSaveData data = GetSaveData();
         if (data == null)
             return;
@@ -176,12 +173,21 @@ public sealed class IapOfferPopupController : MonoBehaviour
         if (HasAlreadyShownGoldOffer(data))
             return;
 
-        if (IsEntitlementActive(IapProductIds.GoldBoostSubscription))
+        if (ShouldSuppressOfferForActiveEntitlement(IapProductIds.GoldBoostSubscription))
         {
             MarkGoldOfferShown(data);
             return;
         }
+
         QueueOffer(OfferType.GoldBoost, firstMoneyOfferDelay);
+    }
+
+    private void OnResourcePickedUp(ResourceTransactionSignal signal)
+    {
+        if (signal.ResourceType != ResourceType.Money)
+            return;
+
+        NotifyMoneyPickedUpForGoldBoostOffer();
     }
 
     private void OnResourceDeposited(ResourceTransactionSignal signal)
@@ -199,7 +205,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
         if (HasAlreadyShownWorkerOffer(data))
             return;
 
-        if (IsEntitlementActive(IapProductIds.PremiumWorkerUnlock))
+        if (ShouldSuppressOfferForActiveEntitlement(IapProductIds.PremiumWorkerUnlock))
         {
             MarkWorkerOfferShown(data);
             return;
@@ -232,9 +238,9 @@ public sealed class IapOfferPopupController : MonoBehaviour
         switch (offerType)
         {
             case OfferType.GoldBoost:
-                titleText.text = "Gold Boost";
-                messageText.text = "Boost all gold earnings by 1.5x?";
-                buyButtonText.text = "Buy";
+                titleText.text = "Gold Boost 1.5x";
+                messageText.text = "Subscribe to keep all gold earnings boosted by 1.5x.";
+                buyButtonText.text = "Subscribe";
                 break;
 
             case OfferType.PremiumWorker:
@@ -479,6 +485,14 @@ public sealed class IapOfferPopupController : MonoBehaviour
             return null;
 
         return SaveManager.Instance.CurrentData;
+    }
+
+    private bool ShouldSuppressOfferForActiveEntitlement(string productId)
+    {
+        if (ShouldIgnoreSavedOfferHistory())
+            return false;
+
+        return IsEntitlementActive(productId);
     }
 
     private static bool IsEntitlementActive(string productId)
