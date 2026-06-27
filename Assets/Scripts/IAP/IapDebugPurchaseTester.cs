@@ -11,6 +11,12 @@ public sealed class IapDebugPurchaseTester : MonoBehaviour
 
     private void Awake()
     {
+        if (!CanRunTestActions())
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
         ResolveReferencesIfNeeded();
     }
 

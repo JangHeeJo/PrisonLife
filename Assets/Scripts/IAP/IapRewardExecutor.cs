@@ -15,7 +15,7 @@ public sealed class IapRewardExecutor : MonoBehaviour
     [SerializeField] private PremiumWorkerUnlockController premiumWorkerUnlockController;
 
     [Header("Debug")]
-    [SerializeField] private bool logState = true;
+    [SerializeField] private bool logState;
 
     private void Awake()
     {

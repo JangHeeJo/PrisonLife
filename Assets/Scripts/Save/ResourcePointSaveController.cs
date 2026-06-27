@@ -40,7 +40,7 @@ public sealed class ResourcePointSaveController : MonoBehaviour
     [SerializeField] private bool saveImmediatelyOnChanged = true;
 
     [Header("Debug")]
-    [SerializeField] private bool logState = true;
+    [SerializeField] private bool logState;
 
     [Tooltip("등록되지 않은 TargetId 신호가 들어왔을 때 로그를 출력합니다. pointId 매칭 문제를 확인할 때 사용합니다.")]
     [SerializeField] private bool logUnmatchedSignals = true;

@@ -182,10 +182,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
                 MarkGoldOfferShown(data);
                 return;
             }
-        }
-
-        Debug.Log("[IapOfferPopupController] Showing Gold Boost offer now.", this);
-        ShowPopup(OfferType.GoldBoost);
+        }        ShowPopup(OfferType.GoldBoost);
     }
 
     private void OnResourcePickedUp(ResourceTransactionSignal signal)

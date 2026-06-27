@@ -69,7 +69,7 @@ public sealed class UnitSpawnController : MonoBehaviour
     [SerializeField] private bool saveImmediatelyOnSpawn = true;
 
     [Header("Debug")]
-    [SerializeField] private bool logState = true;
+    [SerializeField] private bool logState;
 
     private readonly Dictionary<string, UnitSpawnEntry> entryMap = new();
 

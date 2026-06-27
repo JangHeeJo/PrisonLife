@@ -1,32 +1,25 @@
 using UnityEngine;
 
 /// <summary>
-/// 진행도 초기화 버튼입니다.
-/// 
-/// 사용처:
-/// - 테스트용 초기화 버튼
-/// - 옵션 화면의 Reset Progress 버튼
+/// UI bridge for clearing local progress during development and QA.
 /// </summary>
 public sealed class GameResetButton : MonoBehaviour
 {
     [Header("Option")]
-    [Tooltip("true면 에디터/개발 빌드에서만 동작합니다.")]
+    [Tooltip("When enabled, reset works only in the Editor or development builds.")]
     [SerializeField] private bool onlyDevelopmentBuild = false;
 
-    [Tooltip("초기화 실행 전 로그를 출력합니다.")]
-    [SerializeField] private bool logState = true;
+    [Tooltip("Logs reset attempts and guard results.")]
+    [SerializeField] private bool logState;
 
     public void ResetProgress()
     {
-        if (onlyDevelopmentBuild)
+        if (onlyDevelopmentBuild && !Debug.isDebugBuild && !Application.isEditor)
         {
-            if (!Debug.isDebugBuild && !Application.isEditor)
-            {
-                if (logState)
-                    Debug.Log("[GameResetButton] Reset ignored. Not development build.", this);
+            if (logState)
+                Debug.Log("[GameResetButton] Reset ignored. Not development build.", this);
 
-                return;
-            }
+            return;
         }
 
         if (SaveManager.Instance == null)

@@ -1365,8 +1365,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26c0a81e8fd9ea6468c1f5990b41ce16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameResetButton
-  onlyDevelopmentBuild: 0
-  logState: 1
+  onlyDevelopmentBuild: 1
+  logState: 0
 --- !u!4 &93041676 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6916637294937773191, guid: 3db049fb584ac7740aa992626ba4046e,
@@ -1457,7 +1457,7 @@ MonoBehaviour:
   androidRewardedAdUnitId: ca-app-pub-3940256099942544/5224354917
   iosRewardedAdUnitId: ca-app-pub-3940256099942544/1712485313
   loadOnStart: 1
-  logState: 1
+  logState: 0
 --- !u!1001 &100090717
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1993,7 +1993,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92e03b785ff423f47bbd8ca5fa4a015c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SaveManager
-  logState: 1
+  logState: 0
 --- !u!1001 &131018274
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8145,7 +8145,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IapRewardExecutor
   goldMultiplierProvider: {fileID: 769451247}
   premiumWorkerUnlockController: {fileID: 1014192935}
-  logState: 1
+  logState: 0
 --- !u!4 &699393911
 Transform:
   m_ObjectHideFlags: 0
@@ -12794,7 +12794,7 @@ MonoBehaviour:
   useSaveData: 1
   restoreSavedUnitsOnStart: 1
   saveImmediatelyOnSpawn: 1
-  logState: 1
+  logState: 0
 --- !u!4 &1022472590
 Transform:
   m_ObjectHideFlags: 0
@@ -14757,8 +14757,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26c0a81e8fd9ea6468c1f5990b41ce16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameResetButton
-  onlyDevelopmentBuild: 0
-  logState: 1
+  onlyDevelopmentBuild: 1
+  logState: 0
 --- !u!114 &1238109494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16426,8 +16426,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26c0a81e8fd9ea6468c1f5990b41ce16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameResetButton
-  onlyDevelopmentBuild: 0
-  logState: 1
+  onlyDevelopmentBuild: 1
+  logState: 0
 --- !u!114 &1325224522
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23247,7 +23247,7 @@ MonoBehaviour:
     restoreOnStart: 1
   useSaveData: 1
   saveImmediatelyOnChanged: 1
-  logState: 1
+  logState: 0
   logUnmatchedSignals: 1
 --- !u!1 &1939691739
 GameObject:
@@ -26129,7 +26129,7 @@ MonoBehaviour:
   showDelaySeconds: 2
   fadeDuration: 0.15
   loadAdWhenNotReady: 1
-  logState: 1
+  logState: 0
 --- !u!114 &2144128110 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 205366794222779862, guid: 3db049fb584ac7740aa992626ba4046e,

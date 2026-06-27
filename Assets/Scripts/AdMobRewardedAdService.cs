@@ -36,7 +36,7 @@ public sealed class AdMobRewardedAdService : MonoBehaviour
     [SerializeField] private bool allowTestAdUnitIdInReleaseBuild;
 
     [Header("Debug")]
-    [SerializeField] private bool logState = true;
+    [SerializeField] private bool logState;
 
     private RewardedAd rewardedAd;
     private CancellationTokenSource destroyCts;

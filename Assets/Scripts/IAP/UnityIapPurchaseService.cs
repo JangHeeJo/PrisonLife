@@ -15,7 +15,7 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
 
     [Header("Startup")]
     [SerializeField] private bool initializeOnStart = true;
-    [SerializeField] private bool logState = true;
+    [SerializeField] private bool logState;
 
     private IStoreController storeController;
     private IExtensionProvider extensionProvider;
