@@ -12,6 +12,12 @@ public sealed class GameResetButton : MonoBehaviour
     [Tooltip("Logs reset attempts and guard results.")]
     [SerializeField] private bool logState;
 
+    private void Awake()
+    {
+        if (onlyDevelopmentBuild && !Debug.isDebugBuild && !Application.isEditor)
+            gameObject.SetActive(false);
+    }
+
     public void ResetProgress()
     {
         if (onlyDevelopmentBuild && !Debug.isDebugBuild && !Application.isEditor)

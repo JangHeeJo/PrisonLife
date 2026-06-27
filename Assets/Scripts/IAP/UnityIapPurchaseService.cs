@@ -20,6 +20,7 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
     private IStoreController storeController;
     private IExtensionProvider extensionProvider;
     private bool isInitializing;
+    private string pendingProductId;
 
     public static UnityIapPurchaseService Instance => instance;
 
@@ -84,8 +85,9 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
 
         if (!IsInitialized)
         {
+            pendingProductId = productId;
             InitializePurchasing();
-            Debug.LogWarning($"[UnityIapPurchaseService] Store is not ready yet. Try again after initialization: {productId}", this);
+            Log($"Store is initializing. Purchase queued: {productId}");
             return;
         }
 
@@ -119,6 +121,8 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
         extensionProvider = extensions;
         isInitializing = false;
         Log("Unity IAP initialized.");
+
+        TryStartPendingPurchase();
     }
 
     public PurchaseProcessingResult ProcessPurchase(PurchaseEventArgs args)
@@ -149,13 +153,25 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
     public void OnInitializeFailed(InitializationFailureReason error)
     {
         isInitializing = false;
+        pendingProductId = null;
         Debug.LogWarning($"[UnityIapPurchaseService] Initialization failed: {error}", this);
     }
 
     public void OnInitializeFailed(InitializationFailureReason error, string message)
     {
         isInitializing = false;
+        pendingProductId = null;
         Debug.LogWarning($"[UnityIapPurchaseService] Initialization failed: {error} / {message}", this);
+    }
+
+    private void TryStartPendingPurchase()
+    {
+        if (string.IsNullOrEmpty(pendingProductId))
+            return;
+
+        string productId = pendingProductId;
+        pendingProductId = null;
+        BuyProduct(productId);
     }
 
     private void ResolveRewardExecutorIfNeeded()
