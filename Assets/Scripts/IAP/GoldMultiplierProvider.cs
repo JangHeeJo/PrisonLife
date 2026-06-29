@@ -2,10 +2,12 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// 골드 획득 배율을 제공하는 컨트롤러입니다.
+/// Owns the game's gold earning multiplier policy.
 ///
-/// IAP 구독 또는 광고 보상 부스터가 활성화되어 있으면
-/// 골드 획득량 1.5배 효과를 적용합니다.
+/// Paid subscription and rewarded-ad boosts intentionally share the same public
+/// multiplier so reward calculation code does not need to know where the boost
+/// came from. Persistence stays here as well, which keeps GoldHudView focused on
+/// currency display and arithmetic.
 /// </summary>
 public sealed class GoldMultiplierProvider : MonoBehaviour
 {
@@ -68,19 +70,11 @@ public sealed class GoldMultiplierProvider : MonoBehaviour
 
     public void RefreshFromSave()
     {
-        bool active = false;
-        long expiresAtTicks = 0L;
-
-        if (SaveManager.Instance != null && SaveManager.Instance.CurrentData != null)
-        {
-            GameSaveData data = SaveManager.Instance.CurrentData;
-            active = IapEntitlementState.IsActive(data, productId);
-            expiresAtTicks = Math.Max(0L, data.goldBoostAdExpiresAtUtcTicks);
-        }
-
-        isSubscriptionActive = active;
-        adBoostExpiresAtUtcTicks = expiresAtTicks;
+        GameSaveData data = GetWritableSaveData();
+        isSubscriptionActive = data != null && IapEntitlementState.IsActive(data, productId);
+        adBoostExpiresAtUtcTicks = data != null ? Math.Max(0L, data.goldBoostAdExpiresAtUtcTicks) : 0L;
         wasTimedBoostActive = IsAdBoostActive;
+
         ClearExpiredAdBoost();
         NotifyMultiplierChanged();
     }
@@ -122,13 +116,7 @@ public sealed class GoldMultiplierProvider : MonoBehaviour
         adBoostExpiresAtUtcTicks = startTime.Add(duration).Ticks;
         wasTimedBoostActive = true;
 
-        if (SaveManager.Instance != null &&
-            SaveManager.Instance.CurrentData != null &&
-            !SaveManager.Instance.IsResetting)
-        {
-            SaveManager.Instance.CurrentData.goldBoostAdExpiresAtUtcTicks = adBoostExpiresAtUtcTicks;
-            SaveManager.Instance.MarkDirtyAndSave();
-        }
+        SaveAdBoostExpiry();
 
         if (logState)
             Debug.Log($"[GoldMultiplierProvider] Ad boost granted until {AdBoostExpiresAtUtc:O}", this);
@@ -141,19 +129,8 @@ public sealed class GoldMultiplierProvider : MonoBehaviour
         bool changed = isSubscriptionActive != active;
         isSubscriptionActive = active;
 
-        if (save &&
-            SaveManager.Instance != null &&
-            SaveManager.Instance.CurrentData != null &&
-            !SaveManager.Instance.IsResetting)
-        {
-            IapEntitlementState.SetActive(
-                SaveManager.Instance.CurrentData,
-                productId,
-                isSubscriptionActive
-            );
-
-            SaveManager.Instance.MarkDirtyAndSave();
-        }
+        if (save)
+            SaveSubscriptionState();
 
         if (logState)
         {
@@ -178,14 +155,35 @@ public sealed class GoldMultiplierProvider : MonoBehaviour
             return;
 
         adBoostExpiresAtUtcTicks = 0L;
+        SaveAdBoostExpiry();
+    }
 
-        if (SaveManager.Instance != null &&
-            SaveManager.Instance.CurrentData != null &&
-            !SaveManager.Instance.IsResetting)
-        {
-            SaveManager.Instance.CurrentData.goldBoostAdExpiresAtUtcTicks = 0L;
-            SaveManager.Instance.MarkDirtyAndSave();
-        }
+    private void SaveSubscriptionState()
+    {
+        GameSaveData data = GetWritableSaveData();
+        if (data == null)
+            return;
+
+        IapEntitlementState.SetActive(data, productId, isSubscriptionActive);
+        SaveManager.Instance.MarkDirtyAndSave();
+    }
+
+    private void SaveAdBoostExpiry()
+    {
+        GameSaveData data = GetWritableSaveData();
+        if (data == null)
+            return;
+
+        data.goldBoostAdExpiresAtUtcTicks = adBoostExpiresAtUtcTicks;
+        SaveManager.Instance.MarkDirtyAndSave();
+    }
+
+    private static GameSaveData GetWritableSaveData()
+    {
+        if (SaveManager.Instance == null || SaveManager.Instance.IsResetting)
+            return null;
+
+        return SaveManager.Instance.CurrentData;
     }
 
     private void NotifyMultiplierChanged()

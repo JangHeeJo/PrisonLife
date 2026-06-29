@@ -20,8 +20,8 @@ public sealed class IapOfferPopupController : MonoBehaviour
 
     private static IapOfferPopupController instance;
 
-
-    [Header("Timing")]    [SerializeField, Min(0f)] private float workerDepositOfferDelay = 0.15f;
+    [Header("Timing")]
+    [SerializeField, Min(0f)] private float workerDepositOfferDelay = 0.15f;
 
     [Header("Worker Unlock Detection")]
     [SerializeField]
@@ -126,7 +126,6 @@ public sealed class IapOfferPopupController : MonoBehaviour
         disposables.Dispose();
     }
 
-
     public static void ResetRuntimeStateForNewGame()
     {
         if (instance == null)
@@ -169,20 +168,10 @@ public sealed class IapOfferPopupController : MonoBehaviour
         if (isShowing)
             return;
 
-        GameSaveData data = GetSaveData();
-        bool shouldUseReleaseGate = !ShouldIgnoreSavedOfferHistory();
+        if (!CanShowGoldBoostOffer())
+            return;
 
-        if (shouldUseReleaseGate && data != null)
-        {
-            if (HasAlreadyShownGoldOffer(data))
-                return;
-
-            if (IsEntitlementActive(IapProductIds.GoldBoostSubscription))
-            {
-                MarkGoldOfferShown(data);
-                return;
-            }
-        }        ShowPopup(OfferType.GoldBoost);
+        ShowPopup(OfferType.GoldBoost);
     }
 
     private void OnResourcePickedUp(ResourceTransactionSignal signal)
@@ -213,6 +202,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
             MarkWorkerOfferShown(data);
             return;
         }
+
         QueueOffer(OfferType.PremiumWorker, workerDepositOfferDelay);
     }
 
@@ -466,6 +456,25 @@ public sealed class IapOfferPopupController : MonoBehaviour
             return goldOfferShownThisSession;
 
         return data.shownGoldBoostFirstMoneyOffer;
+    }
+
+    private bool CanShowGoldBoostOffer()
+    {
+        if (ShouldIgnoreSavedOfferHistory())
+            return !goldOfferShownThisSession;
+
+        GameSaveData data = GetSaveData();
+        if (data == null)
+            return true;
+
+        if (HasAlreadyShownGoldOffer(data))
+            return false;
+
+        if (!IsEntitlementActive(IapProductIds.GoldBoostSubscription))
+            return true;
+
+        MarkGoldOfferShown(data);
+        return false;
     }
 
     private bool HasAlreadyShownWorkerOffer(GameSaveData data)

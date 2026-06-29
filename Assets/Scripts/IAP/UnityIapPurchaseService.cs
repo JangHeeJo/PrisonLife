@@ -3,11 +3,34 @@ using UnityEngine.Purchasing;
 using UnityEngine.Purchasing.Extension;
 
 /// <summary>
-/// Bridges Google Play Billing/Unity IAP purchases to the existing game reward flow.
-/// Editor and development builds can still use IapDebugPurchaseTester for instant test rewards.
+/// Runtime boundary between Unity IAP / Google Play Billing and game rewards.
+///
+/// Responsibilities:
+/// - owns store initialization and product registration,
+/// - queues a purchase request made before the store is ready,
+/// - validates product availability before opening the native purchase sheet,
+/// - forwards completed purchases to IapRewardExecutor.
 /// </summary>
 public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListener
 {
+    private readonly struct ProductRegistration
+    {
+        public ProductRegistration(string productId, ProductType productType)
+        {
+            ProductId = productId;
+            ProductType = productType;
+        }
+
+        public string ProductId { get; }
+        public ProductType ProductType { get; }
+    }
+
+    private static readonly ProductRegistration[] ProductCatalog =
+    {
+        new ProductRegistration(IapProductIds.GoldBoostSubscription, ProductType.Subscription),
+        new ProductRegistration(IapProductIds.PremiumWorkerUnlock, ProductType.NonConsumable)
+    };
+
     private static UnityIapPurchaseService instance;
 
     [Header("Reward")]
@@ -23,6 +46,7 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
     private string pendingProductId;
 
     public static UnityIapPurchaseService Instance => instance;
+    public bool HasPendingPurchase => !string.IsNullOrEmpty(pendingProductId);
 
     private bool IsInitialized => storeController != null && extensionProvider != null;
 
@@ -85,18 +109,12 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
 
         if (!IsInitialized)
         {
-            pendingProductId = productId;
-            InitializePurchasing();
-            Log($"Store is initializing. Purchase queued: {productId}");
+            QueuePurchaseUntilInitialized(productId);
             return;
         }
 
-        Product product = storeController.products.WithID(productId);
-        if (product == null || !product.availableToPurchase)
-        {
-            Debug.LogWarning($"[UnityIapPurchaseService] Product is not available: {productId}", this);
+        if (!TryGetPurchasableProduct(productId, out Product product))
             return;
-        }
 
         Log($"Starting purchase: {productId}");
         storeController.InitiatePurchase(product);
@@ -109,8 +127,7 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
 
         isInitializing = true;
         ConfigurationBuilder builder = ConfigurationBuilder.Instance(StandardPurchasingModule.Instance());
-        builder.AddProduct(IapProductIds.GoldBoostSubscription, ProductType.Subscription);
-        builder.AddProduct(IapProductIds.PremiumWorkerUnlock, ProductType.NonConsumable);
+        RegisterProducts(builder);
 
         UnityPurchasing.Initialize(this, builder);
     }
@@ -172,6 +189,32 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
         string productId = pendingProductId;
         pendingProductId = null;
         BuyProduct(productId);
+    }
+
+    private void QueuePurchaseUntilInitialized(string productId)
+    {
+        pendingProductId = productId;
+        InitializePurchasing();
+        Log($"Store is initializing. Purchase queued: {productId}");
+    }
+
+    private bool TryGetPurchasableProduct(string productId, out Product product)
+    {
+        product = storeController.products.WithID(productId);
+        if (product != null && product.availableToPurchase)
+            return true;
+
+        Debug.LogWarning($"[UnityIapPurchaseService] Product is not available: {productId}", this);
+        return false;
+    }
+
+    private static void RegisterProducts(ConfigurationBuilder builder)
+    {
+        for (int i = 0; i < ProductCatalog.Length; i++)
+        {
+            ProductRegistration product = ProductCatalog[i];
+            builder.AddProduct(product.ProductId, product.ProductType);
+        }
     }
 
     private void ResolveRewardExecutorIfNeeded()

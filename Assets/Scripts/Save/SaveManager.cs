@@ -30,6 +30,7 @@ public sealed class SaveManager : MonoBehaviour
 
     private string SavePath => Path.Combine(Application.persistentDataPath, SaveFileName);
     private string TempSavePath => SavePath + ".tmp";
+    private string BackupSavePath => SavePath + ".bak";
 
     private void Awake()
     {
@@ -60,6 +61,8 @@ public sealed class SaveManager : MonoBehaviour
     /// </summary>
     public void LoadOrCreate()
     {
+        RestoreBackupIfNeeded();
+
         if (!File.Exists(SavePath))
         {
             CreateNewSaveData("New save created");
@@ -101,12 +104,7 @@ public sealed class SaveManager : MonoBehaviour
             EnsureSaveDirectory();
 
             string json = JsonUtility.ToJson(currentData, true);
-            File.WriteAllText(TempSavePath, json);
-
-            if (File.Exists(SavePath))
-                File.Delete(SavePath);
-
-            File.Move(TempSavePath, SavePath);
+            CommitStagedSaveFile(json);
             Log($"Saved. Path: {SavePath}");
         }
         catch (Exception e)
@@ -135,6 +133,7 @@ public sealed class SaveManager : MonoBehaviour
 
         DeleteIfExists(SavePath);
         DeleteIfExists(TempSavePath);
+        DeleteIfExists(BackupSavePath);
 
         Log("Save cleared.");
     }
@@ -195,6 +194,29 @@ public sealed class SaveManager : MonoBehaviour
     {
         if (File.Exists(path))
             File.Delete(path);
+    }
+
+    private void CommitStagedSaveFile(string json)
+    {
+        File.WriteAllText(TempSavePath, json);
+
+        if (File.Exists(SavePath))
+        {
+            DeleteIfExists(BackupSavePath);
+            File.Move(SavePath, BackupSavePath);
+        }
+
+        File.Move(TempSavePath, SavePath);
+        DeleteIfExists(BackupSavePath);
+    }
+
+    private void RestoreBackupIfNeeded()
+    {
+        if (File.Exists(SavePath) || !File.Exists(BackupSavePath))
+            return;
+
+        File.Move(BackupSavePath, SavePath);
+        Log("Save restored from backup.");
     }
 
     /// <summary>
