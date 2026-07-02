@@ -133,6 +133,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
         if (amount > 0)
         {
+            // Money pickup creates a reward opportunity, then both monetization prompts can react.
             hasPendingShow = true;
             IapOfferPopupController.GetOrCreate().ShowGoldBoostOfferNowForMoneyPickup();
             ShowDelayedAsync().Forget();
@@ -322,7 +323,9 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
             if (rewarded)
             {
+                // A completed rewarded ad grants one extra copy of the latest gold reward.
                 bool claimed = goldHudView.TryClaimDoubleGoldReward();
+                // The same ad also extends the timed 1.5x gold boost policy.
                 GoldMultiplierProvider.Instance?.GrantAdBoostForOneDay();
 
                 if (logState)

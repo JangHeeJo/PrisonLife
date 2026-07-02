@@ -89,6 +89,7 @@ public sealed class GoldHudView : MonoBehaviour
         if (GameStateSignals.Instance == null)
             return;
 
+        // Gold is earned from gameplay signals, not by direct calls from pickup objects.
         subscription = GameStateSignals.Instance.ResourcePickedUp
             .Subscribe(OnResourcePickedUp);
     }
@@ -114,9 +115,11 @@ public sealed class GoldHudView : MonoBehaviour
         if (signal.ResourceType != ResourceType.Money)
             return;
 
+        // Money is converted into gold through the current boost policy.
         int earnedGold = CalculateGoldReward(signal.Amount);
         AddGold(earnedGold);
 
+        // Keep the last reward so the rewarded-ad flow can grant one extra copy.
         lastEarnedGold = earnedGold;
         RewardableGoldChanged?.Invoke(lastEarnedGold);
     }
@@ -189,6 +192,7 @@ public sealed class GoldHudView : MonoBehaviour
         if (lastEarnedGold <= 0)
             return false;
 
+        // Rewarded ads add the same amount as the last earned gold, then consume the claim state.
         AddGold(lastEarnedGold);
         ClearRewardableGold();
         return true;

@@ -144,6 +144,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
         if (GameStateSignals.Instance == null)
             return;
 
+        // Offers are triggered by gameplay moments, not by hard-coded scene buttons.
         disposables.Add(
             GameStateSignals.Instance.ResourcePickedUp
                 .Subscribe(OnResourcePickedUp)
@@ -187,6 +188,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
         if (signal.ResourceType != ResourceType.Money)
             return;
 
+        // Premium worker offers are shown only when money is deposited into worker unlock points.
         if (!IsWorkerUnlockPoint(signal.TargetId))
             return;
 
@@ -276,6 +278,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
 
     private void OnBuyClicked()
     {
+        // The popup only selects a product. UnityIapPurchaseService owns the actual purchase flow.
         UnityIapPurchaseService purchaseService = UnityIapPurchaseService.GetOrCreate();
 
         switch (currentOffer)
@@ -470,6 +473,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
         if (HasAlreadyShownGoldOffer(data))
             return false;
 
+        // Do not keep selling the subscription offer after the entitlement is already active.
         if (!IsEntitlementActive(IapProductIds.GoldBoostSubscription))
             return true;
 

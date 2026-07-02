@@ -107,6 +107,8 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
             return;
         }
 
+        // A gameplay popup can request a purchase before Unity IAP finishes initialization.
+        // Queue that product and retry automatically after OnInitialized.
         if (!IsInitialized)
         {
             QueuePurchaseUntilInitialized(productId);
@@ -147,6 +149,7 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
         string productId = args.purchasedProduct.definition.id;
         ResolveRewardExecutorIfNeeded();
 
+        // Billing success is converted into gameplay rewards by IapRewardExecutor.
         if (rewardExecutor != null)
             rewardExecutor.ExecutePurchasedProduct(productId);
         else
@@ -213,6 +216,7 @@ public sealed class UnityIapPurchaseService : MonoBehaviour, IDetailedStoreListe
         for (int i = 0; i < ProductCatalog.Length; i++)
         {
             ProductRegistration product = ProductCatalog[i];
+            // Product type must match the product configured in Google Play Console.
             builder.AddProduct(product.ProductId, product.ProductType);
         }
     }

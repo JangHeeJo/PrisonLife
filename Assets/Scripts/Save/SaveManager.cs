@@ -129,6 +129,7 @@ public sealed class SaveManager : MonoBehaviour
     {
         currentData = new GameSaveData();
         NormalizeCurrentData();
+        // Runtime monetization state is also reset so test buttons and saved entitlements stay in sync.
         ResetRuntimePurchaseState();
 
         DeleteIfExists(SavePath);
@@ -198,6 +199,7 @@ public sealed class SaveManager : MonoBehaviour
 
     private void CommitStagedSaveFile(string json)
     {
+        // Write to a temp file first, then swap it into place to reduce corrupted-save risk.
         File.WriteAllText(TempSavePath, json);
 
         if (File.Exists(SavePath))
@@ -215,6 +217,7 @@ public sealed class SaveManager : MonoBehaviour
         if (File.Exists(SavePath) || !File.Exists(BackupSavePath))
             return;
 
+        // If the previous save swap was interrupted, recover from the backup file.
         File.Move(BackupSavePath, SavePath);
         Log("Save restored from backup.");
     }
@@ -230,6 +233,7 @@ public sealed class SaveManager : MonoBehaviour
         if (currentData.version < CurrentSaveVersion)
             currentData.version = CurrentSaveVersion;
 
+        // Keep old save files safe after new lists are added to GameSaveData.
         currentData.completedUnlockIds = EnsureList(currentData.completedUnlockIds);
         currentData.revealedUnlockGroupIds = EnsureList(currentData.revealedUnlockGroupIds);
         currentData.spawnedUnits = EnsureList(currentData.spawnedUnits);

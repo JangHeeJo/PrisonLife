@@ -33,6 +33,8 @@ public sealed class GoldMultiplierProvider : MonoBehaviour
     public bool IsAdBoostActive => IsTimedBoostActive(DateTime.UtcNow);
     public DateTime AdBoostExpiresAtUtc => new DateTime(Math.Max(0L, adBoostExpiresAtUtcTicks), DateTimeKind.Utc);
 
+    // Reward calculation only asks for the current multiplier.
+    // It does not need to know whether the boost came from IAP or a rewarded ad.
     public float CurrentMultiplier =>
         IsSubscriptionActive || IsAdBoostActive ? subscriptionMultiplier : defaultMultiplier;
 
@@ -112,6 +114,7 @@ public sealed class GoldMultiplierProvider : MonoBehaviour
             ? new DateTime(adBoostExpiresAtUtcTicks, DateTimeKind.Utc)
             : now;
 
+        // If the ad boost is already active, extend it from the current expiry time.
         DateTime startTime = currentExpiry > now ? currentExpiry : now;
         adBoostExpiresAtUtcTicks = startTime.Add(duration).Ticks;
         wasTimedBoostActive = true;
@@ -164,6 +167,7 @@ public sealed class GoldMultiplierProvider : MonoBehaviour
         if (data == null)
             return;
 
+        // Subscription ownership is stored as an entitlement so it can be restored on app restart.
         IapEntitlementState.SetActive(data, productId, isSubscriptionActive);
         SaveManager.Instance.MarkDirtyAndSave();
     }
@@ -174,6 +178,7 @@ public sealed class GoldMultiplierProvider : MonoBehaviour
         if (data == null)
             return;
 
+        // Timed ad boosts persist by expiry ticks instead of remaining seconds.
         data.goldBoostAdExpiresAtUtcTicks = adBoostExpiresAtUtcTicks;
         SaveManager.Instance.MarkDirtyAndSave();
     }

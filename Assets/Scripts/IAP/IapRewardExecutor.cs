@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 /// <summary>
 /// IAP 구매 성공 결과를 게임 내 보상 효과로 변환하는 실행기입니다.
@@ -35,6 +35,7 @@ public sealed class IapRewardExecutor : MonoBehaviour
 
         ResolveEffectTargetsIfNeeded();
 
+        // Product IDs are routed here so the billing service never needs to know gameplay details.
         switch (productId)
         {
             case IapProductIds.GoldBoostSubscription:
