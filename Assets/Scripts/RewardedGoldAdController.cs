@@ -133,6 +133,14 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
         if (amount > 0)
         {
+            if (HasActiveAdBoost())
+            {
+                hasPendingShow = false;
+                goldHudView?.ClearRewardableGold();
+                HideAsync().Forget();
+                return;
+            }
+
             // Money pickup creates a reward opportunity, then both monetization prompts can react.
             hasPendingShow = true;
             IapOfferPopupController.GetOrCreate().ShowGoldBoostOfferNowForMoneyPickup();
@@ -162,7 +170,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
             if (showDelaySeconds > 0f)
                 await UniTask.Delay(TimeSpan.FromSeconds(showDelaySeconds), cancellationToken: token);
 
-            if (goldHudView == null || !goldHudView.HasRewardableGold)
+            if (goldHudView == null || !goldHudView.HasRewardableGold || HasActiveAdBoost())
                 return;
 
             if (adService != null && !adService.IsAdReady && loadAdWhenNotReady)
@@ -281,6 +289,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
     private void OnClickAgree()
     {
+        HideAsync().Forget();
         WatchAdAsync().Forget();
     }
 
@@ -305,10 +314,8 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
         if (!adService.IsAdReady)
         {
-            if (loadAdWhenNotReady)
-                adService.LoadAd();
-
-            RefreshUI();
+            goldHudView.ClearRewardableGold();
+            await HideAsync();
             return;
         }
 
@@ -336,8 +343,8 @@ public sealed class RewardedGoldAdController : MonoBehaviour
                 if (logState)
                     Debug.Log("[RewardedGoldAdController] Ad was closed without reward.", this);
 
-                if (goldHudView.HasRewardableGold && lifeCts != null)
-                    await ShowAsync(lifeCts.Token);
+                goldHudView.ClearRewardableGold();
+                await HideAsync();
             }
         }
         catch (OperationCanceledException)
@@ -387,10 +394,16 @@ public sealed class RewardedGoldAdController : MonoBehaviour
             noButtonText.text = noText;
 
         if (agreeButton != null)
-            agreeButton.interactable = hasReward && adReady && !isProcessing;
+            agreeButton.interactable = hasReward && !isProcessing;
 
         if (noButton != null)
             noButton.interactable = hasReward && !isProcessing;
+    }
+
+    private static bool HasActiveAdBoost()
+    {
+        GoldMultiplierProvider provider = GoldMultiplierProvider.Instance;
+        return provider != null && provider.IsAdBoostActive;
     }
 
     private static void CancelAndDispose(ref CancellationTokenSource cts)
