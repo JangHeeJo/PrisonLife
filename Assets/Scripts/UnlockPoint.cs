@@ -18,9 +18,6 @@ public sealed class UnlockPoint : InteractionPointBase
     [SerializeField, Min(1)] private int costAmount = 1;
 
     [Header("Gold Currency")]
-    [Tooltip("Money 비용을 골드 HUD의 저장 골드에서 차감합니다.")]
-    [SerializeField] private bool useGoldHudForMoneyCost = false;
-
     [Tooltip("Money 비용 결제에 사용할 GoldHudView입니다. 비워두면 자동 검색합니다.")]
     [SerializeField] private GoldHudView goldHudView;
 
@@ -43,10 +40,6 @@ public sealed class UnlockPoint : InteractionPointBase
     public int CurrentPaidAmount => currentPaidAmount;
     public bool IsAvailable => isAvailable;
     public bool IsUnlocked => isUnlocked;
-
-    private bool ShouldUseGoldHudCost =>
-        useGoldHudForMoneyCost &&
-        costResourceType == ResourceType.Money;
 
     private void Awake()
     {
@@ -134,6 +127,9 @@ public sealed class UnlockPoint : InteractionPointBase
 
     private bool TryPayCost(PlayerCarryStack playerCarryStack)
     {
+        if (costResourceType == ResourceType.Money)
+            return TryPayMoneyCost(playerCarryStack);
+
         if (playerCarryStack != null &&
             playerCarryStack.GetCount(costResourceType) > 0 &&
             playerCarryStack.TryRemove(costResourceType))
@@ -141,18 +137,19 @@ public sealed class UnlockPoint : InteractionPointBase
             return true;
         }
 
-        if (ShouldUseGoldHudCost)
-        {
-            if (goldHudView == null)
-                goldHudView = FindFirstObjectByType<GoldHudView>();
-
-            if (goldHudView == null)
-                return false;
-
-            return goldHudView.TrySpendGold(1);
-        }
-
         return false;
+    }
+
+    private bool TryPayMoneyCost(PlayerCarryStack playerCarryStack)
+    {
+        if (goldHudView == null)
+            goldHudView = FindFirstObjectByType<GoldHudView>();
+
+        if (goldHudView == null || !goldHudView.TrySpendGold(1))
+            return false;
+
+        playerCarryStack?.TryRemove(ResourceType.Money);
+        return true;
     }
 
     private void CompleteUnlock()
