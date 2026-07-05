@@ -57,6 +57,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
     private CancellationTokenSource animationCts;
 
     private bool hasPendingShow;
+    private bool hasShownPromptThisSession;
     private bool isShowing;
     private bool isProcessing;
 
@@ -133,13 +134,15 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
         if (amount > 0)
         {
-            if (HasActiveAdBoost())
+            if (hasShownPromptThisSession || HasActiveAdBoost())
             {
                 hasPendingShow = false;
                 goldHudView?.ClearRewardableGold();
                 HideAsync().Forget();
                 return;
             }
+
+            hasShownPromptThisSession = true;
 
             // Money pickup creates a reward opportunity, then both monetization prompts can react.
             hasPendingShow = true;
