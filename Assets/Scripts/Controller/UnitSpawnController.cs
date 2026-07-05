@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -200,6 +200,8 @@ public sealed class UnitSpawnController : MonoBehaviour
             carryLimit
         );
 
+        EnsurePremiumWorkerContextReceiver(unit, entry);
+
         MonoBehaviour[] behaviours = unit.GetComponentsInChildren<MonoBehaviour>(true);
 
         for (int i = 0; i < behaviours.Length; i++)
@@ -207,6 +209,20 @@ public sealed class UnitSpawnController : MonoBehaviour
             if (behaviours[i] is IUnitSpawnContextReceiver receiver)
                 receiver.Initialize(context);
         }
+    }
+
+    private static void EnsurePremiumWorkerContextReceiver(GameObject unit, UnitSpawnEntry entry)
+    {
+        if (!string.Equals(entry.unitId, "PremiumWorker", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (unit.GetComponentInChildren<HandcuffDeliveryWorkerUnit>(true) != null)
+            return;
+
+        if (unit.GetComponent<UnitCarryStack>() == null)
+            unit.AddComponent<UnitCarryStack>();
+
+        unit.AddComponent<HandcuffDeliveryWorkerUnit>();
     }
 
     private int GetCurrentAutomationCarryLimit()
