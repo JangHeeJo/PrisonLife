@@ -48,6 +48,7 @@ public sealed class RewardedGoldAdController : MonoBehaviour
     [Header("Option")]
     [Tooltip("Automatically request a new ad when the popup opens and no ad is ready.")]
     [SerializeField] private bool loadAdWhenNotReady = true;
+    [SerializeField, Min(0.1f)] private float adLoadWaitSeconds = 6f;
 
     [Header("Debug")]
     [SerializeField] private bool logState;
@@ -317,9 +318,14 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
         if (!adService.IsAdReady)
         {
-            goldHudView.ClearRewardableGold();
-            await HideAsync();
-            return;
+            adService.LoadAd();
+
+            if (!await WaitUntilAdReadyAsync(lifeCts.Token))
+            {
+                goldHudView.ClearRewardableGold();
+                await HideAsync();
+                return;
+            }
         }
 
         isProcessing = true;
@@ -401,6 +407,22 @@ public sealed class RewardedGoldAdController : MonoBehaviour
 
         if (noButton != null)
             noButton.interactable = hasReward && !isProcessing;
+    }
+
+    private async UniTask<bool> WaitUntilAdReadyAsync(CancellationToken token)
+    {
+        float elapsed = 0f;
+
+        while (elapsed < adLoadWaitSeconds)
+        {
+            if (adService != null && adService.IsAdReady)
+                return true;
+
+            await UniTask.Yield(PlayerLoopTiming.Update, token);
+            elapsed += Time.unscaledDeltaTime;
+        }
+
+        return adService != null && adService.IsAdReady;
     }
 
     private static bool HasActiveAdBoost()
