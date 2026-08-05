@@ -107,9 +107,6 @@ public class PlayerController : MonoBehaviour
         float worldZ = (screenX.x * input.y - input.x * screenX.y) / determinant;
         Vector3 moveDirection = new Vector3(worldX, 0f, worldZ);
 
-        if (moveDirection.sqrMagnitude <= 0.001f)
-            return Vector3.zero;
-
         return moveDirection.normalized;
     }
 
