@@ -93,21 +93,19 @@ public class PlayerController : MonoBehaviour
         if (!useCameraRelativeMovement || mainCamera == null)
             return new Vector3(input.x, 0f, input.y).normalized;
 
-        Vector3 cameraForward = mainCamera.transform.forward;
-        Vector3 cameraRight = mainCamera.transform.right;
+        Vector3 origin = transform.position;
+        Vector3 screenOrigin = mainCamera.WorldToScreenPoint(origin);
+        Vector3 screenX = mainCamera.WorldToScreenPoint(origin + Vector3.right) - screenOrigin;
+        Vector3 screenZ = mainCamera.WorldToScreenPoint(origin + Vector3.forward) - screenOrigin;
+        float determinant = screenX.x * screenZ.y - screenZ.x * screenX.y;
 
-        // 바닥 이동만 필요하므로 카메라의 상하 기울기는 제거합니다.
-        cameraForward.y = 0f;
-        cameraRight.y = 0f;
-
-        if (cameraForward.sqrMagnitude <= 0.001f || cameraRight.sqrMagnitude <= 0.001f)
+        // Solve the camera projection so joystick axes match the screen axes on the ground.
+        if (Mathf.Abs(determinant) <= 0.001f)
             return new Vector3(input.x, 0f, input.y).normalized;
 
-        cameraForward.Normalize();
-        cameraRight.Normalize();
-
-        // 조이스틱 X는 화면 오른쪽, Y는 화면 위쪽 방향으로 변환합니다.
-        Vector3 moveDirection = cameraRight * input.x + cameraForward * input.y;
+        float worldX = (input.x * screenZ.y - screenZ.x * input.y) / determinant;
+        float worldZ = (screenX.x * input.y - input.x * screenX.y) / determinant;
+        Vector3 moveDirection = new Vector3(worldX, 0f, worldZ);
 
         if (moveDirection.sqrMagnitude <= 0.001f)
             return Vector3.zero;
