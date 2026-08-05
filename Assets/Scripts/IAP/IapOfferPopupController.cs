@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using R3;
 using TMPro;
 using UnityEngine;
@@ -51,6 +52,7 @@ public sealed class IapOfferPopupController : MonoBehaviour
     private bool goldOfferShownThisSession;
     private bool workerOfferShownThisSession;
     private bool isShowing;
+    private bool isWatchingPremiumWorkerAd;
     private OfferType currentOffer;
     private float pendingShowTime;
 
@@ -240,8 +242,8 @@ public sealed class IapOfferPopupController : MonoBehaviour
 
             case OfferType.PremiumWorker:
                 titleText.text = "Premium Worker";
-                messageText.text = "Unlock a premium worker for faster automation?";
-                buyButtonText.text = "Unlock";
+                messageText.text = "Watch an ad to unlock a premium worker for faster automation.";
+                buyButtonText.text = "WATCH AD";
                 break;
 
             default:
@@ -278,21 +280,75 @@ public sealed class IapOfferPopupController : MonoBehaviour
 
     private void OnBuyClicked()
     {
-        // The popup only selects a product. UnityIapPurchaseService owns the actual purchase flow.
-        UnityIapPurchaseService purchaseService = UnityIapPurchaseService.GetOrCreate();
-
         switch (currentOffer)
         {
             case OfferType.GoldBoost:
-                purchaseService.BuyGoldBoostSubscription();
+                UnityIapPurchaseService.GetOrCreate().BuyGoldBoostSubscription();
                 break;
 
             case OfferType.PremiumWorker:
-                purchaseService.BuyPremiumWorkerUnlock();
-                break;
+                WatchPremiumWorkerAdAsync().Forget();
+                return;
         }
 
         HidePopup();
+    }
+
+    private async UniTaskVoid WatchPremiumWorkerAdAsync()
+    {
+        if (isWatchingPremiumWorkerAd)
+            return;
+
+        AdMobRewardedAdService adService = FindFirstObjectByType<AdMobRewardedAdService>();
+        if (adService == null)
+            return;
+
+        isWatchingPremiumWorkerAd = true;
+        buyButton.interactable = false;
+        buyButtonText.text = "Loading...";
+
+        try
+        {
+            if (!adService.IsAdReady)
+            {
+                adService.LoadAd();
+
+                float elapsed = 0f;
+                while (!adService.IsAdReady && elapsed < 6f)
+                {
+                    await UniTask.Yield(PlayerLoopTiming.Update, this.GetCancellationTokenOnDestroy());
+                    elapsed += Time.unscaledDeltaTime;
+                }
+            }
+
+            if (!adService.IsAdReady || !isShowing || currentOffer != OfferType.PremiumWorker)
+                return;
+
+            buyButtonText.text = "WATCH AD";
+
+            bool rewarded = await adService.ShowRewardedAsync(this.GetCancellationTokenOnDestroy());
+            if (!rewarded)
+                return;
+
+            PremiumWorkerUnlockController unlockController =
+                FindFirstObjectByType<PremiumWorkerUnlockController>();
+
+            unlockController?.UnlockPremiumWorker();
+            HidePopup();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            isWatchingPremiumWorkerAd = false;
+
+            if (isShowing && currentOffer == OfferType.PremiumWorker)
+            {
+                buyButton.interactable = true;
+                buyButtonText.text = "WATCH AD";
+            }
+        }
     }
 
     private void HidePopup()
