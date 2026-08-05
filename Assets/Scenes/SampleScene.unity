@@ -29796,7 +29796,7 @@ MonoBehaviour:
   jumpPower: 1.2
   transferDuration: 0.35
   moneyRewardPoint: {fileID: 5710290001726793199}
-  rewardMoneyPerNpc: 2
+  rewardMoneyPerNpc: 6
   deactivateNpcAtPrison: 0
   prisonAreaState: {fileID: 318280319}
 --- !u!4 &3884820551657360225
